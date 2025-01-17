@@ -1,0 +1,45 @@
+services:
+  database:
+    image: mysql:8.0
+    container_name: subworld_db
+    environment:
+      MYSQL_DATABASE: subworld
+      MYSQL_USER: app
+      MYSQL_PASSWORD: securepassword
+      MYSQL_ROOT_PASSWORD: rootpassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - database_data:/var/lib/mysql:rw
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: symfony_app
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html:delegated
+    ports:
+      - "8000:8000"
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "mysql://app:securepassword@database:3306/subworld"
+      APP_ENV: dev
+      APP_SECRET: "!ChangeMe!"
+    command: php -S 0.0.0.0:8000 -t public
+    healthcheck:
+      test: ["CMD", "php", "-v"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  database_data:
