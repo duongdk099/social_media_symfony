@@ -148,15 +148,3 @@ Contributions are welcome! Feel free to open an issue or submit a pull request.
 ## 📝 License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-```
-
----
-
-### **Key Highlights**
-
-- Reflects the **current state** of the project without Mercure (planned for later).
-- Explains both the constraints and the features of the project.
-- Includes detailed installation and setup instructions for contributors or testers.
-- Provides a roadmap for future improvements, aligning with the project’s constraints.
-
-If you’d like further customization or have specific elements to highlight, let me know! 😊
