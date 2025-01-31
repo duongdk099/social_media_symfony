@@ -39,7 +39,6 @@ class PostRepositoryTest extends KernelTestCase
 
         $postRepository = $entityManager->getRepository(Post::class);
         $savedPost = $postRepository->findOneBy(['title' => 'Test Post']);
-
         $this->assertNotNull($savedPost);
         $this->assertEquals("Test Post", $savedPost->getTitle());
         $this->assertSame($subworld, $savedPost->getSubworld());

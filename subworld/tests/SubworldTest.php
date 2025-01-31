@@ -25,7 +25,6 @@ class SubworldTest extends TestCase
         $subworld = new Subworld();
         $user = new User();
         $subworld->setOwner($user);
-
         $this->assertSame($user, $subworld->getOwner());
     }
 }

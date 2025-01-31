@@ -26,7 +26,6 @@ class ReportTest extends TestCase
         $user = new User();
         $post = new Post();
         $comment = new Comment();
-
         $report->setUser($user);
         $report->setPost($post);
         $report->setComment($comment);

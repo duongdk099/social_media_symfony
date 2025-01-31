@@ -22,7 +22,6 @@ class VoteTest extends TestCase
         $vote = new Vote();
         $user = new User();
         $post = new Post();
-
         $vote->setUser($user);
         $vote->setPost($post);
 

@@ -26,7 +26,6 @@ class CommentTest extends TestCase
         $post = new Post();
         $comment->setUser($user);
         $comment->setPost($post);
-
         $this->assertSame($user, $comment->getUser());
         $this->assertSame($post, $comment->getPost());
     }

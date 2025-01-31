@@ -13,7 +13,6 @@ class MediaTest extends TestCase
         $media = new Media();
         $media->setUrl("https://example.com/image.jpg");
         $media->setType("image");
-
         $this->assertEquals("https://example.com/image.jpg", $media->getUrl());
         $this->assertEquals("image", $media->getType());
     }

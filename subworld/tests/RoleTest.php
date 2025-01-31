@@ -11,7 +11,6 @@ class RoleTest extends TestCase
     {
         $role = new Role();
         $role->setName("ROLE_ADMIN");
-
         $this->assertEquals("ROLE_ADMIN", $role->getName());
     }
 }

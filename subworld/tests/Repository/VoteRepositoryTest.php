@@ -15,7 +15,6 @@ class VoteRepositoryTest extends KernelTestCase
         self::bootKernel();
         $container = static::getContainer();
         $entityManager = $container->get('doctrine')->getManager();
-
         $user = new User();
         $user->setEmail("voter@example.com");
         $user->setUsername("voter");

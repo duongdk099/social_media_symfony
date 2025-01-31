@@ -47,7 +47,6 @@ class CommentRepositoryTest extends KernelTestCase
 
         $commentRepository = $entityManager->getRepository(Comment::class);
         $savedComment = $commentRepository->findOneBy(['content' => 'This is a test comment.']);
-
         $this->assertNotNull($savedComment);
         $this->assertEquals("This is a test comment.", $savedComment->getContent());
         $this->assertSame($post, $savedComment->getPost());

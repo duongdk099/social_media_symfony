@@ -23,7 +23,6 @@ class MessageTest extends TestCase
         $message = new Message();
         $sender = new User();
         $receiver = new User();
-
         $message->setSender($sender);
         $message->setReceiver($receiver);
 

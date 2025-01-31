@@ -24,7 +24,6 @@ class NotificationTest extends TestCase
         $notification = new Notification();
         $user = new User();
         $notification->setUser($user);
-
         $this->assertSame($user, $notification->getUser());
     }
 }

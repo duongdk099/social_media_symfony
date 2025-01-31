@@ -12,7 +12,6 @@ class UserRepositoryTest extends KernelTestCase
         self::bootKernel();
         $container = static::getContainer();
         $entityManager = $container->get('doctrine')->getManager();
-
         $user = new User();
         $user->setEmail("testuser@example.com");
         $user->setUsername("testuser");

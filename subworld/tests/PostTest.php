@@ -25,7 +25,6 @@ class PostTest extends TestCase
         $post = new Post();
         $user = new User();
         $post->setUser($user);
-
         $this->assertSame($user, $post->getUser());
     }
 }

@@ -13,7 +13,6 @@ class UserTest extends TestCase
         $user->setEmail("test@example.com");
         $user->setUsername("testuser");
         $user->setPassword("hashedpassword");
-
         $this->assertEquals("test@example.com", $user->getEmail());
         $this->assertEquals("testuser", $user->getUsername());
         $this->assertEquals("hashedpassword", $user->getPassword());

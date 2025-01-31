@@ -30,7 +30,6 @@ class SubworldRepositoryTest extends KernelTestCase
 
         $subworldRepository = $entityManager->getRepository(Subworld::class);
         $savedSubworld = $subworldRepository->findOneBy(['name' => 'Tech Community']);
-
         $this->assertNotNull($savedSubworld);
         $this->assertEquals("Tech Community", $savedSubworld->getName());
     }
