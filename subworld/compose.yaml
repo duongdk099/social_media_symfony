@@ -8,7 +8,7 @@ services:
       MYSQL_PASSWORD: securepassword
       MYSQL_ROOT_PASSWORD: rootpassword
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - database_data:/var/lib/mysql:rw
     healthcheck:

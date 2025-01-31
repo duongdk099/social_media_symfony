@@ -75,7 +75,12 @@
         }
     },
     "require-dev": {
+        "doctrine/data-fixtures": "^2.0",
         "doctrine/doctrine-fixtures-bundle": "^4.0",
-        "fakerphp/faker": "*"
+        "fakerphp/faker": "*",
+        "phpunit/phpunit": "^9.5",
+        "symfony/browser-kit": "7.2.*",
+        "symfony/css-selector": "7.2.*",
+        "symfony/phpunit-bridge": "^7.2"
     }
 }
