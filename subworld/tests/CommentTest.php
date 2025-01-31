@@ -24,7 +24,6 @@ class CommentTest extends TestCase
         $comment = new Comment();
         $user = new User();
         $post = new Post();
-
         $comment->setUser($user);
         $comment->setPost($post);
 
