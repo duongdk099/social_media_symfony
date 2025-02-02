@@ -10,6 +10,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class VoteRepositoryTest extends KernelTestCase
 {
+
     public function testVoteCanBeSavedAndRetrieved(): void
     {
         self::bootKernel();
@@ -48,5 +49,22 @@ class VoteRepositoryTest extends KernelTestCase
 
         $this->assertNotNull($savedVote);
         $this->assertEquals(1, $savedVote->getValue());
+    }
+
+    public function testVoteWithoutUserThrowsException(): void
+    {
+        self::bootKernel();
+        $container = static::getContainer();
+        $entityManager = $container->get('doctrine')->getManager();
+
+        $post = $entityManager->getRepository(Post::class)->findOneBy([]);
+
+        $vote = new Vote();
+        $vote->setValue(1);
+        $vote->setPost($post);
+        $entityManager->persist($vote);
+
+        $this->expectException(\Doctrine\DBAL\Exception\NotNullConstraintViolationException::class);
+        $entityManager->flush();
     }
 }

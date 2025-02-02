@@ -29,14 +29,14 @@ class AppFixtures extends Fixture
     public function load(ObjectManager $manager): void
     {
         $faker = Factory::create();
+        
 
-        // Create Roles
         $roleAdmin = (new Role())->setName('ROLE_ADMIN');
         $roleUser = (new Role())->setName('ROLE_USER');
         $manager->persist($roleAdmin);
         $manager->persist($roleUser);
 
-        // Create Users
+
         $users = [];
         for ($i = 1; $i <= 10; $i++) {
             $user = (new User())
@@ -48,7 +48,7 @@ class AppFixtures extends Fixture
             $users[] = $user;
         }
 
-        // Create Subworlds
+
         $subworlds = [];
         for ($i = 1; $i <= 5; $i++) {
             $subworld = (new Subworld())
@@ -63,7 +63,7 @@ class AppFixtures extends Fixture
             $subworlds[] = $subworld;
         }
 
-        // Create Posts
+
         $posts = [];
         foreach ($subworlds as $subworld) {
             for ($i = 1; $i <= rand(5, 10); $i++) {
@@ -79,7 +79,7 @@ class AppFixtures extends Fixture
             }
         }
 
-        // Create Comments
+
         $comments = [];
         foreach ($posts as $post) {
             for ($i = 1; $i <= rand(3, 6); $i++) {
@@ -93,7 +93,7 @@ class AppFixtures extends Fixture
             }
         }
 
-        // Create Votes
+
         foreach (array_merge($posts, $comments) as $votable) {
             for ($i = 1; $i <= rand(5, 15); $i++) {
                 $vote = (new Vote())
@@ -105,7 +105,7 @@ class AppFixtures extends Fixture
             }
         }
 
-        // Create Media
+
         foreach ($posts as $post) {
             for ($i = 1; $i <= rand(1, 3); $i++) {
                 $media = (new Media())
@@ -116,7 +116,7 @@ class AppFixtures extends Fixture
             }
         }
 
-        // Create Notifications
+
         foreach ($users as $user) {
             for ($i = 1; $i <= rand(2, 5); $i++) {
                 $notification = (new Notification())
@@ -128,7 +128,6 @@ class AppFixtures extends Fixture
             }
         }
 
-        // Create Messages
         for ($i = 1; $i <= 20; $i++) {
             $message = (new Message())
                 ->setContent($faker->sentence)
@@ -138,7 +137,7 @@ class AppFixtures extends Fixture
             $manager->persist($message);
         }
 
-        // Create Reports
+
         foreach (array_merge($posts, $comments) as $reportable) {
             for ($i = 1; $i <= rand(1, 3); $i++) {
                 $report = (new Report())
@@ -151,7 +150,7 @@ class AppFixtures extends Fixture
             }
         }
 
-        // Flush all data to the database
+
         $manager->flush();
     }
 }
