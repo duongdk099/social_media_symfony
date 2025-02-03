@@ -29,25 +29,26 @@ class AppFixtures extends Fixture
     public function load(ObjectManager $manager): void
     {
         $faker = Factory::create();
-        
 
         $roleAdmin = (new Role())->setName('ROLE_ADMIN');
         $roleUser = (new Role())->setName('ROLE_USER');
         $manager->persist($roleAdmin);
         $manager->persist($roleUser);
-
+        $manager->flush();
 
         $users = [];
         for ($i = 1; $i <= 10; $i++) {
             $user = (new User())
                 ->setEmail("user$i@example.com")
-                ->setUsername("user$i")
-                ->setPassword($this->passwordHasher->hashPassword(new User(), 'password'))
-                ->setRoles($i === 1 ? ['ROLE_ADMIN'] : ['ROLE_USER']);
+                ->setUsername("user$i");
+
+            $hashedPassword = $this->passwordHasher->hashPassword($user, 'password');
+            $user->setPassword($hashedPassword);
+            $user->addRoleEntity($i === 1 ? $roleAdmin : $roleUser);
+
             $manager->persist($user);
             $users[] = $user;
         }
-
 
         $subworlds = [];
         for ($i = 1; $i <= 5; $i++) {
@@ -56,13 +57,14 @@ class AppFixtures extends Fixture
                 ->setDescription($faker->sentence)
                 ->setCreatedAt($faker->dateTime)
                 ->setOwner($faker->randomElement($users));
+
             foreach ($faker->randomElements($users, rand(3, 8)) as $member) {
                 $subworld->addMember($member);
             }
+
             $manager->persist($subworld);
             $subworlds[] = $subworld;
         }
-
 
         $posts = [];
         foreach ($subworlds as $subworld) {
@@ -74,11 +76,11 @@ class AppFixtures extends Fixture
                     ->setUpdatedAt($faker->dateTime)
                     ->setUser($faker->randomElement($users))
                     ->setSubworld($subworld);
+
                 $manager->persist($post);
                 $posts[] = $post;
             }
         }
-
 
         $comments = [];
         foreach ($posts as $post) {
@@ -88,11 +90,11 @@ class AppFixtures extends Fixture
                     ->setCreatedAt($faker->dateTime)
                     ->setUser($faker->randomElement($users))
                     ->setPost($post);
+
                 $manager->persist($comment);
                 $comments[] = $comment;
             }
         }
-
 
         foreach (array_merge($posts, $comments) as $votable) {
             for ($i = 1; $i <= rand(5, 15); $i++) {
@@ -101,10 +103,10 @@ class AppFixtures extends Fixture
                     ->setUser($faker->randomElement($users))
                     ->setPost($votable instanceof Post ? $votable : null)
                     ->setComment($votable instanceof Comment ? $votable : null);
+
                 $manager->persist($vote);
             }
         }
-
 
         foreach ($posts as $post) {
             for ($i = 1; $i <= rand(1, 3); $i++) {
@@ -112,10 +114,10 @@ class AppFixtures extends Fixture
                     ->setUrl($faker->imageUrl)
                     ->setType($faker->randomElement(['image', 'video']))
                     ->setPost($post);
+
                 $manager->persist($media);
             }
         }
-
 
         foreach ($users as $user) {
             for ($i = 1; $i <= rand(2, 5); $i++) {
@@ -124,19 +126,25 @@ class AppFixtures extends Fixture
                     ->setCreatedAt($faker->dateTime)
                     ->setIsRead($faker->boolean)
                     ->setUser($user);
+
                 $manager->persist($notification);
             }
         }
 
         for ($i = 1; $i <= 20; $i++) {
+            $sender = $faker->randomElement($users);
+            do {
+                $receiver = $faker->randomElement($users);
+            } while ($receiver === $sender);
+
             $message = (new Message())
                 ->setContent($faker->sentence)
                 ->setCreatedAt($faker->dateTime)
-                ->setSender($faker->randomElement($users))
-                ->setReceiver($faker->randomElement($users));
+                ->setSender($sender)
+                ->setReceiver($receiver);
+
             $manager->persist($message);
         }
-
 
         foreach (array_merge($posts, $comments) as $reportable) {
             for ($i = 1; $i <= rand(1, 3); $i++) {
@@ -146,10 +154,10 @@ class AppFixtures extends Fixture
                     ->setUser($faker->randomElement($users))
                     ->setPost($reportable instanceof Post ? $reportable : null)
                     ->setComment($reportable instanceof Comment ? $reportable : null);
+
                 $manager->persist($report);
             }
         }
-
 
         $manager->flush();
     }

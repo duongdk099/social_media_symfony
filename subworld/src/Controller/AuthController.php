@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Entity\Role;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -10,6 +11,8 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/api/auth')]
 class AuthController extends AbstractController
@@ -40,7 +43,13 @@ class AuthController extends AbstractController
         $user = new User();
         $user->setEmail($data['email']);
         $user->setUsername($data['username']);
-        $user->setRoles(['ROLE_USER']);
+
+        $roleUser = $entityManager->getRepository(Role::class)->findOneBy(['name' => 'ROLE_USER']);
+        if (!$roleUser) {
+            return $this->json(['error' => 'ROLE_USER role not found in the database'], 500);
+        }
+        $user->addRoleEntity($roleUser);
+
         $hashedPassword = $passwordHasher->hashPassword($user, $data['password']);
         $user->setPassword($hashedPassword);
 
@@ -49,7 +58,6 @@ class AuthController extends AbstractController
 
         return $this->json(['message' => 'User registered successfully'], 201);
     }
-
 
     #[Route('/login', methods: ['POST'])]
     public function login(Request $request, JWTTokenManagerInterface $jwtManager, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher): JsonResponse
@@ -69,8 +77,8 @@ class AuthController extends AbstractController
         error_log("User found: " . $user->getEmail());
 
         $token = $jwtManager->createFromPayload($user, [
-            'email' => $user->getEmail(),
             'roles' => $user->getRoles(),
+            'sub' => $user->getUserIdentifier(),
         ]);
 
         return $this->json(['token' => $token]);
@@ -81,5 +89,22 @@ class AuthController extends AbstractController
     {
         return $this->json(['message' => 'Logout successful'], 200);
     }
-    
+
+    #[Route('/refresh', methods: ['POST'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function refreshToken(JWTTokenManagerInterface $jwtManager): JsonResponse
+    {
+        $user = $this->getUser();
+
+        if (!$user) {
+            throw new AccessDeniedException();
+        }
+
+        $newToken = $jwtManager->createFromPayload($user, [
+            'sub' => $user->getUserIdentifier(),
+            'roles' => $user->getRoles(),
+        ]);
+
+        return $this->json(['token' => $newToken]);
+    }
 }

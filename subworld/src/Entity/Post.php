@@ -6,6 +6,8 @@ use App\Repository\PostRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
+
 
 #[ORM\Entity(repositoryClass: PostRepository::class)]
 class Post
@@ -13,38 +15,49 @@ class Post
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
+    #[Groups(['post:read', 'comment:read','subworld:read','report:read'])] 
     private ?int $id = null;
 
     #[ORM\Column(type: 'string', length: 255)]
+    #[Groups(['post:read', 'comment:read','subworld:read','report:read'])]
     private ?string $title = null;
 
     #[ORM\Column(type: 'text')]
+    #[Groups(['post:read'])]
     private ?string $content = null;
 
     #[ORM\Column(type: 'datetime')]
+    #[Groups(['post:read'])]
     private ?\DateTimeInterface $createdAt = null;
 
     #[ORM\Column(type: 'datetime', nullable: true)]
+    #[Groups(['post:read'])]
     private ?\DateTimeInterface $updatedAt = null;
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'posts')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['post:read','subworld:read'])]
     private ?User $user = null;
 
     #[ORM\ManyToOne(targetEntity: Subworld::class, inversedBy: 'posts')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['post:read'])]
     private ?Subworld $subworld = null;
 
     #[ORM\OneToMany(mappedBy: 'post', targetEntity: Comment::class, cascade: ['persist', 'remove'])]
+    #[Groups(['post:read'])]
     private Collection $comments;
 
     #[ORM\OneToMany(mappedBy: 'post', targetEntity: Vote::class, cascade: ['persist', 'remove'])]
+    #[Groups(['post:read'])]
     private Collection $votes;
 
     #[ORM\OneToMany(mappedBy: 'post', targetEntity: Media::class, cascade: ['persist', 'remove'])]
+    #[Groups(['post:read'])]
     private Collection $media;
 
     #[ORM\OneToMany(mappedBy: 'post', targetEntity: Report::class, cascade: ['persist', 'remove'])]
+    #[Groups(['post:read'])]
     private Collection $reports;
 
 
@@ -54,6 +67,7 @@ class Post
         $this->comments = new ArrayCollection();
         $this->votes = new ArrayCollection();
         $this->media = new ArrayCollection();
+        $this->reports = new ArrayCollection();
     }
 
     public function getId(): ?int

@@ -2,31 +2,37 @@
 
 namespace App\Entity;
 
-use App\Repository\CommentRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
+use App\Repository\CommentRepository;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
 
 #[ORM\Entity(repositoryClass: CommentRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 class Comment
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
+    #[Groups(['comment:read', 'post:read'])]
     private ?int $id = null;
 
     #[ORM\Column(type: 'text')]
+    #[Groups(['comment:read', 'comment:write', 'post:read'])]
     private ?string $content = null;
 
     #[ORM\Column(type: 'datetime')]
+    #[Groups(['comment:read', 'post:read'])]
     private ?\DateTimeInterface $createdAt = null;
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'comments')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['comment:read'])]
     private ?User $user = null;
-
+    
     #[ORM\ManyToOne(targetEntity: Post::class, inversedBy: 'comments')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['comment:read'])]
     private ?Post $post = null;
 
     #[ORM\OneToMany(mappedBy: 'comment', targetEntity: Vote::class, cascade: ['persist', 'remove'])]
@@ -37,8 +43,8 @@ class Comment
 
     public function __construct()
     {
+        $this->reports = new ArrayCollection();
         $this->votes = new ArrayCollection();
-        $this->createdAt = new \DateTime();
     }
 
     public function getId(): ?int
@@ -54,7 +60,6 @@ class Comment
     public function setContent(string $content): self
     {
         $this->content = $content;
-
         return $this;
     }
 
@@ -63,12 +68,12 @@ class Comment
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeInterface $createdAt): self
+    #[ORM\PrePersist]
+    public function setCreatedAtOnPersist(): void
     {
-        $this->createdAt = $createdAt;
-
-        return $this;
+        $this->createdAt = new \DateTime();
     }
+
 
     public function getUser(): ?User
     {
@@ -78,7 +83,6 @@ class Comment
     public function setUser(?User $user): self
     {
         $this->user = $user;
-
         return $this;
     }
 
@@ -90,7 +94,6 @@ class Comment
     public function setPost(?Post $post): self
     {
         $this->post = $post;
-
         return $this;
     }
 

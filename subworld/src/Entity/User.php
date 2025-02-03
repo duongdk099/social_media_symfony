@@ -8,7 +8,9 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
-
+use Ramsey\Uuid\Uuid;
+use Ramsey\Uuid\UuidInterface;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 
 
@@ -16,27 +18,32 @@ use Symfony\Component\Security\Core\User\UserInterface;
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
+
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-    private ?int $id = null;
+    #[ORM\Column(type: 'uuid', unique: true)]
+    #[Groups(['post:read','subworld:read','user:read','message:read','report:read','notification:read'])]
+    private ?UuidInterface $id = null;
+
+
 
     #[ORM\Column(type: 'string', length: 180, unique: true)]
+    #[Groups(['post:read','subworld:read','user:read','message:read','report:read','notification:read'])]
     private ?string $email = null;
 
-    #[ORM\Column(type: 'json')]
-    private array $roles = [];
-
     #[ORM\Column(type: 'string')]
+    #[Groups(['post:read','user:read'])]
     private ?string $password = null;
 
     #[ORM\Column(type: 'string', length: 50)]
+    #[Groups(['post:read','comment:read','subworld:read','user:read','message:read','report:read','notification:read'])]
     private ?string $username = null;
+
 
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: Post::class, cascade: ['persist', 'remove'])]
     private Collection $posts;
 
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: Comment::class, cascade: ['persist', 'remove'])]
+    #[ORM\JoinColumn(nullable: false)]
     private Collection $comments;
 
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: Notification::class, cascade: ['persist', 'remove'])]
@@ -66,6 +73,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function __construct()
     {
+        $this->id = Uuid::uuid4(); 
         $this->posts = new ArrayCollection();
         $this->comments = new ArrayCollection();
         $this->notifications = new ArrayCollection();
@@ -78,7 +86,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->reports = new ArrayCollection();
     }
 
-    public function getId(): ?int
+    public function getId(): ?UuidInterface
     {
         return $this->id;
     }
@@ -100,22 +108,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function getUserIdentifier(): string
     {
-        return (string) $this->email;
+        return $this->id instanceof UuidInterface ? $this->id->toString() : (string) $this->id;
     }
+
+
 
     public function getRoles(): array
     {
-        $roles = $this->roles;
-        $roles[] = 'ROLE_USER';
-
+        $roles = $this->rolesEntities->map(fn($role) => $role->getName())->toArray();
+        if (!in_array('ROLE_USER', $roles)) {
+            $roles[] = 'ROLE_USER';
+        }
         return array_unique($roles);
-    }
-
-    public function setRoles(array $roles): self
-    {
-        $this->roles = $roles;
-
-        return $this;
     }
 
     public function getPassword(): string
@@ -270,11 +274,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if (!$this->rolesEntities->contains($role)) {
             $this->rolesEntities[] = $role;
-            $role->addUser($this);
         }
-
         return $this;
     }
+
 
     public function removeRoleEntity(Role $role): self
     {
