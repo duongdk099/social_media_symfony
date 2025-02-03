@@ -45,7 +45,10 @@ class AppFixtures extends Fixture
             $hashedPassword = $this->passwordHasher->hashPassword($user, 'password');
             $user->setPassword($hashedPassword);
             $user->addRoleEntity($i === 1 ? $roleAdmin : $roleUser);
-
+            $user->setVerifiedAt(new \DateTime());
+            $user->setVerified(true);
+            $user->setVerificationToken(null);
+            $user->setVerificationTokenExpiresAt(null);    
             $manager->persist($user);
             $users[] = $user;
         }

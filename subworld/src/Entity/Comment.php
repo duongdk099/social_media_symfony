@@ -43,6 +43,7 @@ class Comment
 
     public function __construct()
     {
+        $this->createdAt = new \DateTime(); 
         $this->reports = new ArrayCollection();
         $this->votes = new ArrayCollection();
     }
@@ -68,10 +69,10 @@ class Comment
         return $this->createdAt;
     }
 
-    #[ORM\PrePersist]
-    public function setCreatedAtOnPersist(): void
+    public function setCreatedAt(\DateTimeInterface $createdAt): self
     {
-        $this->createdAt = new \DateTime();
+        $this->createdAt = $createdAt;
+        return $this;
     }
 
 
