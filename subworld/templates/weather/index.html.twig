@@ -1,0 +1,7 @@
+<h1>Météo à Paris</h1>
+
+{% if weather is not empty %}
+    <p>Température actuelle : {{ weather[0].coordinates[0].dates[0].value }}°C</p>
+{% else %}
+    <p>Aucune donnée météo disponible.</p>
+{% endif %}

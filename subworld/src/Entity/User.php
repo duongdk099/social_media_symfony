@@ -38,6 +38,25 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['post:read','comment:read','subworld:read','user:read','message:read','report:read','notification:read'])]
     private ?string $username = null;
 
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    #[Groups(['auth:read'])]
+    private ?\DateTimeInterface $createdAt = null;
+
+    #[ORM\Column(type: 'boolean')]
+    #[Groups(['user:read', 'user:write', 'auth:read'])]
+    private bool $isVerified = false;
+
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Groups(['auth:write'])]
+    private ?string $verificationToken = null;
+
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    #[Groups(['auth:read'])]
+    private ?\DateTimeInterface $verifiedAt = null;
+
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    #[Groups(['auth:read'])]
+    private ?\DateTimeInterface $verificationTokenExpiresAt = null;
 
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: Post::class, cascade: ['persist', 'remove'])]
     private Collection $posts;
@@ -74,6 +93,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function __construct()
     {
         $this->id = Uuid::uuid4(); 
+        $this->createdAt = new \DateTime(); 
         $this->posts = new ArrayCollection();
         $this->comments = new ArrayCollection();
         $this->notifications = new ArrayCollection();
@@ -99,6 +119,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setEmail(string $email): self
     {
         $this->email = $email;
+
+        return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTimeInterface
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeInterface $createdAt): self
+    {
+        $this->createdAt = $createdAt;
 
         return $this;
     }
@@ -143,6 +175,51 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         $this->username = $username;
 
+        return $this;
+    }
+
+    public function getVerificationToken(): ?string
+    {
+        return $this->verificationToken;
+    }
+
+    public function setVerificationToken(?string $token): self
+    {
+        $this->verificationToken = $token;
+        return $this;
+    }
+
+    public function isVerified(): bool
+    {
+        return $this->isVerified;
+    }
+
+    public function setVerified(bool $isVerified): self
+    {
+        $this->isVerified = $isVerified;
+        return $this;
+    }
+
+
+    public function getVerificationTokenExpiresAt(): ?\DateTimeInterface
+    {
+        return $this->verificationTokenExpiresAt;
+    }
+
+    public function setVerificationTokenExpiresAt(?\DateTimeInterface $expiresAt): self
+    {
+        $this->verificationTokenExpiresAt = $expiresAt;
+        return $this;
+    }
+
+    public function getVerifiedAt(): ?\DateTimeInterface
+    {
+        return $this->verifiedAt;
+    }
+
+    public function setVerifiedAt(?\DateTimeInterface $verifiedAt): self
+    {
+        $this->verifiedAt = $verifiedAt;
         return $this;
     }
 

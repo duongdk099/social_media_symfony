@@ -13,12 +13,14 @@ use Symfony\Component\Routing\Annotation\Route;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use App\Service\EmailService;
+
 
 #[Route('/api/auth')]
 class AuthController extends AbstractController
 {
     #[Route('/register', methods: ['POST'])]
-    public function register(Request $request, UserPasswordHasherInterface $passwordHasher, EntityManagerInterface $entityManager): JsonResponse
+    public function register(Request $request, UserPasswordHasherInterface $passwordHasher, EntityManagerInterface $entityManager, EmailService $emailService): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
@@ -31,7 +33,6 @@ class AuthController extends AbstractController
         }
 
         $existingUser = $entityManager->getRepository(User::class)->findOneBy(['email' => $data['email']]);
-
         if ($existingUser) {
             return $this->json(['error' => 'Email already in use'], 400);
         }
@@ -53,23 +54,39 @@ class AuthController extends AbstractController
         $hashedPassword = $passwordHasher->hashPassword($user, $data['password']);
         $user->setPassword($hashedPassword);
 
+        $verificationToken = bin2hex(random_bytes(32));
+        $user->setVerificationToken($verificationToken);
+        $user->setVerificationTokenExpiresAt((new \DateTime())->modify('+24 hours'));
+
         $entityManager->persist($user);
         $entityManager->flush();
 
-        return $this->json(['message' => 'User registered successfully'], 201);
+        $emailService->sendAdminNotification($user->getEmail(), $user->getUsername());
+
+        $verificationUrl = "http://localhost:8000/api/auth/verify-email/$verificationToken";
+        $emailService->sendVerificationEmail($user->getEmail(), $verificationUrl);
+
+        return $this->json(['message' => 'User registered successfully. Please check your email to verify your account.'], 201);
     }
+
+
 
     #[Route('/login', methods: ['POST'])]
     public function login(Request $request, JWTTokenManagerInterface $jwtManager, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
+        
         if (!isset($data['email']) || !isset($data['password'])) {
             return $this->json(['error' => 'Missing email or password'], 400);
         }
 
         $user = $entityManager->getRepository(User::class)->findOneBy(['email' => $data['email']]);
 
+        if (!$user->isVerified()) {
+            return $this->json(['error' => 'Please verify your email before logging in'], 403);
+        }
+        
         if (!$user || !$passwordHasher->isPasswordValid($user, $data['password'])) {
             return $this->json(['error' => 'Invalid credentials'], 401);
         }
@@ -106,5 +123,29 @@ class AuthController extends AbstractController
         ]);
 
         return $this->json(['token' => $newToken]);
+    }
+
+    #[Route('/verify-email/{token}', methods: ['GET'])]
+    #[IsGranted('PUBLIC_ACCESS')]
+    public function verifyEmail(string $token, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $user = $entityManager->getRepository(User::class)->findOneBy(['verificationToken' => $token]);
+
+        if (!$user) {
+            return $this->json(['error' => 'Invalid token'], 400);
+        }
+
+        if ($user->getVerificationTokenExpiresAt() < new \DateTime()) {
+            return $this->json(['error' => 'Token expired. Please request a new verification email.'], 400);
+        }
+
+        $user->setVerifiedAt(new \DateTime());
+        $user->setVerified(true);
+        $user->setVerificationToken(null);
+        $user->setVerificationTokenExpiresAt(null);
+
+        $entityManager->flush();
+
+        return $this->json(['message' => 'Email verified successfully. You can now log in.'], 200);
     }
 }
