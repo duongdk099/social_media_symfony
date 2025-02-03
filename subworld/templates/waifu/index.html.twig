@@ -1,0 +1,20 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Waifu Collection{% endblock %}
+
+{% block body %}
+    <h1>Waifu Images</h1>
+
+    {% if waifus is empty %}
+        <p>No waifus found.</p>
+    {% else %}
+        <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+            {% for waifu in waifus %}
+                <div style="border: 1px solid #ccc; padding: 10px; text-align: center;">
+                    <img src="{{ waifu.url }}" alt="Waifu Image" width="300">
+                    <p>Source: <a href="{{ waifu.source }}" target="_blank">View</a></p>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}
