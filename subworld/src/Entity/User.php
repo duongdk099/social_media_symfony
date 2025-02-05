@@ -96,7 +96,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $resetToken = null;
 
     #[ORM\Column(type: "boolean")]
-    private bool $isVerified = false;
 
     public function __construct()
     {
@@ -526,17 +525,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setResetToken(?string $resetToken): self
     {
         $this->resetToken = $resetToken;
-        return $this;
-    }
-
-    public function isVerified(): bool
-    {
-        return $this->isVerified;
-    }
-
-    public function setVerified(bool $isVerified): self
-    {
-        $this->isVerified = $isVerified;
         return $this;
     }
 
