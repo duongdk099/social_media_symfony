@@ -16,12 +16,19 @@
         "symfony/console": "7.2.*",
         "symfony/dotenv": "7.2.*",
         "symfony/flex": "^2",
+        "symfony/form": "7.2.*",
         "symfony/framework-bundle": "7.2.*",
+        "symfony/http-client": "7.2.*",
+        "symfony/mailer": "7.2.*",
         "symfony/maker-bundle": "^1.62",
+        "symfony/notifier": "7.2.*",
         "symfony/runtime": "7.2.*",
         "symfony/security-bundle": "7.2.*",
         "symfony/security-core": "7.2.*",
-        "symfony/yaml": "7.2.*"
+        "symfony/twig-bundle": "7.2.*",
+        "symfony/validator": "7.2.*",
+        "symfony/yaml": "7.2.*",
+        "symfonycasts/reset-password-bundle": "^1.23"
     },
     "config": {
         "allow-plugins": {

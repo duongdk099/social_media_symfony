@@ -64,6 +64,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: Report::class, cascade: ['persist', 'remove'])]
     private Collection $reports;
 
+    #[ORM\Column(type: "string", length: 255, nullable: true)]
+    private ?string $resetToken = null;
+
+    #[ORM\Column(type: "boolean")]
+    private bool $isVerified = false;
+
     public function __construct()
     {
         $this->posts = new ArrayCollection();
@@ -231,7 +237,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     /**
      * @return Collection<int, Vote>
-    */
+     */
     public function getVotes(): Collection
     {
         return $this->votes;
@@ -260,7 +266,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     /**
      * @return Collection<int, Role>
-    */
+     */
     public function getRolesEntities(): Collection
     {
         return $this->rolesEntities;
@@ -287,7 +293,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     /**
      * @return Collection<int, Subworld>
-    */
+     */
     public function getJoinedSubworlds(): Collection
     {
         return $this->joinedSubworlds;
@@ -314,7 +320,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     /**
      * @return Collection<int, Subworld>
-    */
+     */
     public function getOwnedSubworlds(): Collection
     {
         return $this->ownedSubworlds;
@@ -343,7 +349,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     /**
      * @return Collection<int, Message>
-    */
+     */
     public function getSentMessages(): Collection
     {
         return $this->sentMessages;
@@ -372,7 +378,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     /**
      * @return Collection<int, Message>
-    */
+     */
     public function getReceivedMessages(): Collection
     {
         return $this->receivedMessages;
@@ -401,7 +407,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     /**
      * @return Collection<int, Report>
-    */
+     */
     public function getReports(): Collection
     {
         return $this->reports;
@@ -428,9 +434,27 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function eraseCredentials(): void
-    {
+    public function eraseCredentials(): void {}
 
+    public function getResetToken(): ?string
+    {
+        return $this->resetToken;
     }
 
+    public function setResetToken(?string $resetToken): self
+    {
+        $this->resetToken = $resetToken;
+        return $this;
+    }
+
+    public function isVerified(): bool
+    {
+        return $this->isVerified;
+    }
+
+    public function setVerified(bool $isVerified): self
+    {
+        $this->isVerified = $isVerified;
+        return $this;
+    }
 }
