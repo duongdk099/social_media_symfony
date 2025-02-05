@@ -23,7 +23,13 @@ security:
         main:
             lazy: true
             provider: users_in_database
-
+            form_login:
+                login_path: app_login
+                check_path: app_login
+            logout:
+                path: app_logout
+                target: /
+            custom_authenticator: App\Security\Authenticator
     access_control:
         - { path: ^/api/auth/register, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/verify-email, roles: PUBLIC_ACCESS }

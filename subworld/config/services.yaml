@@ -21,6 +21,10 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+    App\Twig\AppExtension:
+        arguments:
+            $subworldRepository: '@App\Repository\SubworldRepository'
+        tags: [ 'twig.extension' ]    
 
     # Explicitly defining EmailService with argument injection
     App\Service\EmailService:

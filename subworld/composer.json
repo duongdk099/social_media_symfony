@@ -17,8 +17,10 @@
         "ramsey/uuid": "^4.7",
         "ramsey/uuid-doctrine": "^2.1",
         "symfony/console": "7.2.*",
+        "symfony/doctrine-messenger": "7.2.*",
         "symfony/dotenv": "7.2.*",
         "symfony/flex": "^2",
+        "symfony/form": "7.2.*",
         "symfony/form": "7.2.*",
         "symfony/framework-bundle": "7.2.*",
         "symfony/http-client": "7.2.*",
@@ -26,13 +28,21 @@
         "symfony/mailer": "7.2.*",
         "symfony/mailtrap-mailer": "7.2.*",
         "symfony/maker-bundle": "^1.62",
+        "symfony/messenger": "7.2.*",
+        "symfony/notifier": "7.2.*",
         "symfony/runtime": "7.2.*",
         "symfony/security-bundle": "7.2.*",
         "symfony/security-core": "7.2.*",
         "symfony/serializer": "7.2.*",
         "symfony/twig-bundle": "7.2.*",
         "symfony/validator": "7.2.*",
-        "symfony/yaml": "7.2.*"
+        "symfony/twig-bundle": "7.2.*",
+        "symfony/validator": "7.2.*",
+        "symfony/yaml": "7.2.*",
+        "symfonycasts/reset-password-bundle": "^1.23",
+        "symfonycasts/verify-email-bundle": "^1.17",
+        "twig/extra-bundle": "^2.12|^3.0",
+        "twig/twig": "^2.12|^3.0"
     },
     "config": {
         "allow-plugins": {
@@ -87,6 +97,7 @@
     },
     "require-dev": {
         "dama/doctrine-test-bundle": "^8.2",
+        "doctrine/data-fixtures": "^2.0",
         "doctrine/doctrine-fixtures-bundle": "^4.0",
         "fakerphp/faker": "*",
         "phpunit/phpunit": "^11.5",

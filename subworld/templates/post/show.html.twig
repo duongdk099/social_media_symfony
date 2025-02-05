@@ -1,0 +1,50 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ post.title }} - MySocial{% endblock %}
+
+{% block body %}
+    <div class="border-b border-gray-700 py-4">
+        <div class="text-sm text-gray-300">
+            <strong>
+                <a href="{{ path('app_subworld_show', { 'id': post.subworld.id }) }}" class="text-blue-400 hover:underline">
+                    {{ post.subworld.name }}
+                </a>
+            </strong> 
+            · Posted by 
+            <strong>
+                <a href="{{ path('app_user_show', { 'id': post.user.id }) }}" class="text-blue-400 hover:underline">
+                    {{ post.user.username }}
+                </a>
+            </strong>
+            · {{ post.createdAt|date("F j, Y") }}
+        </div>
+
+        <h2 class="text-2xl font-semibold text-white mt-2">{{ post.title }}</h2>
+        <p class="text-gray-300 mt-4">{{ post.content }}</p>
+
+        <div class="flex items-center gap-4 mt-3">
+            <button class="text-white hover:text-yellow-400">⬆</button>
+            <span class="text-gray-300">{{ votes }}</span>
+            <button class="text-white hover:text-yellow-400">⬇</button>
+            <span class="text-gray-300">💬 {{ comments|length }}</span>
+        </div>
+
+        {# Display Comments #}
+        <div class="mt-6 ml-4">
+            <h3 class="text-lg font-semibold text-white">Comments</h3>
+            {% for comment in comments %}
+                <div class="border-b border-gray-600 py-3">
+                    <p class="text-gray-400 text-sm">
+                        <a href="{{ path('app_user_show', { 'id': comment.user.id }) }}" class="text-blue-400 hover:underline">
+                            {{ comment.user.username }}
+                        </a> 
+                        - {{ comment.createdAt|date("F j, Y H:i") }}
+                    </p>
+                    <p class="text-gray-300 mt-1">{{ comment.content }}</p>
+                </div>
+            {% else %}
+                <p class="text-gray-400 mt-2">No comments yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

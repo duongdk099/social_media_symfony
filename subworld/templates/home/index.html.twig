@@ -1,0 +1,44 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Home - MySocial{% endblock %}
+
+{% block body %}
+    <h4 class="text-xl font-semibold text-white mb-4">Best ▾</h4>
+
+    {% for post in posts %}
+        <div class="border-b border-gray-700 py-4">
+            <div class="text-sm text-gray-300">
+                <strong>
+                    <a href="{{ path('app_subworld_show', { 'id': post.subworld.id }) }}" class="text-blue-400 hover:underline">
+                        {{ post.subworld.name }}
+                    </a>
+                </strong>
+                · Posted by 
+                <strong>
+                    <a href="{{ path('app_user_show', { 'id': post.user.id }) }}" class="text-blue-400 hover:underline">
+                        {{ post.user.username }}
+                    </a>
+                </strong>
+                · {{ post.createdAt|date("F j, Y") }}
+            </div>
+
+            {# Make the post title clickable #}
+            <div class="text-lg font-semibold text-white mt-2">
+                <a href="{{ path('app_post_show', { 'id': post.id }) }}" class="hover:text-gray-400">
+                    {{ post.title }}
+                </a>
+            </div>
+
+            <p class="text-gray-300 mt-1">{{ post.content|slice(0, 250) ~ '...' }}</p>
+
+            <div class="flex items-center gap-4 mt-3">
+                <button class="text-white hover:text-yellow-400">⬆</button>
+                <span class="text-gray-300">{{ post.votes|length }}</span>
+                <button class="text-white hover:text-yellow-400">⬇</button>
+                <span class="text-gray-300">💬 {{ post.comments|length }}</span>
+            </div>
+        </div>
+    {% else %}
+        <p class="text-gray-400">No posts available yet.</p>
+    {% endfor %}
+{% endblock %}
