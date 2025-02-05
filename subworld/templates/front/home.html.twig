@@ -1,0 +1,11 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Accueil{% endblock %}
+
+{% block body %}
+    <div class="text-center">
+        <h1>Bienvenue sur Subworld 🌍</h1>
+        <p>Un endroit où partager et discuter avec la communauté.</p>
+        <a href="{{ path('app_register') }}" class="btn btn-primary">Créer un compte</a>
+    </div>
+{% endblock %}

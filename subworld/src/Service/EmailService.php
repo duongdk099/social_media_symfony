@@ -43,4 +43,21 @@ class EmailService
         $this->mailer->send($email);
     }
 
+    public function sendPasswordResetEmail(string $to, string $resetUrl): void
+    {
+        $email = (new Email())
+            ->from('noreply@subworld.com')
+            ->to($to)
+            ->subject('Reset your password')
+            ->html("
+                <p>Hello,</p>
+                <p>Click the link below to reset your password:</p>
+                <p><a href='$resetUrl'>Reset Password</a></p>
+                <p>This link will expire in 24 hours.</p>
+            ");
+
+        $this->mailer->send($email);
+    }
+
+
 }

@@ -19,7 +19,7 @@ use App\Service\EmailService;
 #[Route('/api/auth')]
 class AuthController extends AbstractController
 {
-    #[Route('/register', methods: ['POST'])]
+    #[Route('/register', name: 'app_register', methods: ['POST'])]
     public function register(Request $request, UserPasswordHasherInterface $passwordHasher, EntityManagerInterface $entityManager, EmailService $emailService): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -71,7 +71,7 @@ class AuthController extends AbstractController
 
 
 
-    #[Route('/login', methods: ['POST'])]
+    #[Route('/login', name: 'app_login', methods: ['POST'])]
     public function login(Request $request, JWTTokenManagerInterface $jwtManager, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -101,7 +101,7 @@ class AuthController extends AbstractController
         return $this->json(['token' => $token]);
     }
 
-    #[Route('/logout', methods: ['POST'])]
+    #[Route('/logout', name: 'app_logout', methods: ['POST'])]
     public function logout(): JsonResponse
     {
         return $this->json(['message' => 'Logout successful'], 200);
