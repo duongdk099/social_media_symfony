@@ -3,79 +3,75 @@
 namespace App\Controller;
 
 use App\Entity\Report;
-use App\Form\ReportType;
-use App\Repository\ReportRepository;
+use App\Entity\Post;
+use App\Entity\Comment;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[Route('/report')]
-final class ReportController extends AbstractController
+#[Route('/api/reports')]
+class ReportController extends AbstractController
 {
-    #[Route(name: 'app_report_index', methods: ['GET'])]
-    public function index(ReportRepository $reportRepository): Response
+    #[Route('/', methods: ['GET'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function getAllReports(EntityManagerInterface $entityManager): JsonResponse
     {
-        return $this->render('report/index.html.twig', [
-            'reports' => $reportRepository->findAll(),
-        ]);
+        $reports = $entityManager->getRepository(Report::class)->findAll();
+        return $this->json($reports, 200, [], ['groups' => 'report:read']);
     }
 
-    #[Route('/new', name: 'app_report_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
+    #[Route('/create', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function createReport(Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
+        $data = json_decode($request->getContent(), true);
+        $user = $this->getUser();
+
+        if (!isset($data['reason'])) {
+            return $this->json(['error' => 'Reason is required'], 400);
+        }
+
+        if (!isset($data['post_id']) && !isset($data['comment_id'])) {
+            return $this->json(['error' => 'Either post_id or comment_id is required'], 400);
+        }
+
         $report = new Report();
-        $form = $this->createForm(ReportType::class, $report);
-        $form->handleRequest($request);
+        $report->setReason($data['reason']);
+        $report->setUser($user);
+        $report->setCreatedAt(new \DateTime());
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->persist($report);
-            $entityManager->flush();
-
-            return $this->redirectToRoute('app_report_index', [], Response::HTTP_SEE_OTHER);
+        if (isset($data['post_id'])) {
+            $post = $entityManager->getRepository(Post::class)->find($data['post_id']);
+            if (!$post) {
+                return $this->json(['error' => 'Post not found'], 404);
+            }
+            $report->setPost($post);
         }
 
-        return $this->render('report/new.html.twig', [
-            'report' => $report,
-            'form' => $form,
-        ]);
-    }
-
-    #[Route('/{id}', name: 'app_report_show', methods: ['GET'])]
-    public function show(Report $report): Response
-    {
-        return $this->render('report/show.html.twig', [
-            'report' => $report,
-        ]);
-    }
-
-    #[Route('/{id}/edit', name: 'app_report_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Report $report, EntityManagerInterface $entityManager): Response
-    {
-        $form = $this->createForm(ReportType::class, $report);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->flush();
-
-            return $this->redirectToRoute('app_report_index', [], Response::HTTP_SEE_OTHER);
+        if (isset($data['comment_id'])) {
+            $comment = $entityManager->getRepository(Comment::class)->find($data['comment_id']);
+            if (!$comment) {
+                return $this->json(['error' => 'Comment not found'], 404);
+            }
+            $report->setComment($comment);
         }
 
-        return $this->render('report/edit.html.twig', [
-            'report' => $report,
-            'form' => $form,
-        ]);
+        $entityManager->persist($report);
+        $entityManager->flush();
+
+        return $this->json(['message' => 'Report created successfully'], 201);
     }
 
-    #[Route('/{id}', name: 'app_report_delete', methods: ['POST'])]
-    public function delete(Request $request, Report $report, EntityManagerInterface $entityManager): Response
+    #[Route('/{id}', methods: ['DELETE'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function deleteReport(Report $report, EntityManagerInterface $entityManager): JsonResponse
     {
-        if ($this->isCsrfTokenValid('delete'.$report->getId(), $request->getPayload()->getString('_token'))) {
-            $entityManager->remove($report);
-            $entityManager->flush();
-        }
+        $entityManager->remove($report);
+        $entityManager->flush();
 
-        return $this->redirectToRoute('app_report_index', [], Response::HTTP_SEE_OTHER);
+        return $this->json(['message' => 'Report deleted successfully'], 200);
     }
 }

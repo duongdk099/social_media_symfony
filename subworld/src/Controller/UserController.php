@@ -1,81 +1,77 @@
-<?php
+<?php 
 
 namespace App\Controller;
 
 use App\Entity\User;
-use App\Form\UserType;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[Route('/user')]
-final class UserController extends AbstractController
+#[Route('/api/users')]
+class UserController extends AbstractController
 {
-    #[Route(name: 'app_user_index', methods: ['GET'])]
-    public function index(UserRepository $userRepository): Response
+    #[Route('/', methods: ['GET'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function getAllUsers(UserRepository $userRepository): JsonResponse
     {
-        return $this->render('user/index.html.twig', [
-            'users' => $userRepository->findAll(),
-        ]);
+        $users = $userRepository->findAll();
+        return $this->json($users, 200, [], ['groups' => 'user:read']);
     }
 
-    #[Route('/new', name: 'app_user_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
+    #[Route('/me', methods: ['GET'])]
+    #[IsGranted('ROLE_USER')]
+    public function getCurrentUser(): JsonResponse
     {
-        $user = new User();
-        $form = $this->createForm(UserType::class, $user);
-        $form->handleRequest($request);
+        return $this->json($this->getUser(), 200, [], ['groups' => 'user:read']);
+    }
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->persist($user);
-            $entityManager->flush();
+    #[Route('/{id}', methods: ['GET'])]
+    public function getUserById(User $user): JsonResponse
+    {
+        $this->denyAccessUnlessGranted('view', $user);
+        return $this->json($user, 200, [], ['groups' => 'user:read']);
+    }
 
-            return $this->redirectToRoute('app_user_index', [], Response::HTTP_SEE_OTHER);
+    #[Route('/{id}', methods: ['PUT'])]
+    public function editUser(User $user, Request $request, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $this->denyAccessUnlessGranted('edit', $user);
+
+        $data = json_decode($request->getContent(), true);
+
+        if (isset($data['email'])) {
+            $user->setEmail($data['email']);
         }
 
-        return $this->render('user/new.html.twig', [
-            'user' => $user,
-            'form' => $form,
-        ]);
-    }
-
-    #[Route('/{id}', name: 'app_user_show', methods: ['GET'])]
-    public function show(User $user): Response
-    {
-        return $this->render('user/show.html.twig', [
-            'user' => $user,
-        ]);
-    }
-
-    #[Route('/{id}/edit', name: 'app_user_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, User $user, EntityManagerInterface $entityManager): Response
-    {
-        $form = $this->createForm(UserType::class, $user);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->flush();
-
-            return $this->redirectToRoute('app_user_index', [], Response::HTTP_SEE_OTHER);
+        if (isset($data['username'])) {
+            $user->setUsername($data['username']);
         }
 
-        return $this->render('user/edit.html.twig', [
-            'user' => $user,
-            'form' => $form,
-        ]);
-    }
 
-    #[Route('/{id}', name: 'app_user_delete', methods: ['POST'])]
-    public function delete(Request $request, User $user, EntityManagerInterface $entityManager): Response
-    {
-        if ($this->isCsrfTokenValid('delete'.$user->getId(), $request->getPayload()->getString('_token'))) {
-            $entityManager->remove($user);
-            $entityManager->flush();
+        if (isset($data['roles'])) {
+            if (!$this->isGranted('ROLE_ADMIN')) {
+                return $this->json(['error' => 'Only admins can change roles'], 403);
+            }
+            $user->setRoles($data['roles']);
         }
 
-        return $this->redirectToRoute('app_user_index', [], Response::HTTP_SEE_OTHER);
+        $entityManager->flush();
+
+        return $this->json($user, 200, [], ['groups' => 'user:read']);
+    }
+
+    #[Route('/{id}', methods: ['DELETE'])]
+    public function deleteUser(User $user, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $this->denyAccessUnlessGranted('delete', $user);
+
+        $entityManager->remove($user);
+        $entityManager->flush();
+
+        return $this->json(['message' => 'User deleted successfully'], 200);
     }
 }

@@ -6,6 +6,7 @@ use App\Repository\SubworldRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: SubworldRepository::class)]
 class Subworld
@@ -13,26 +14,33 @@ class Subworld
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
+    #[Groups(['post:read','subworld:read'])]
     private ?int $id = null;
 
     #[ORM\Column(type: 'string', length: 255)]
+    #[Groups(['post:read','subworld:read', 'subworld:write'])]
     private ?string $name = null;
 
     #[ORM\Column(type: 'text')]
+    #[Groups(['post:read','subworld:read', 'subworld:write'])]
     private ?string $description = null;
 
     #[ORM\Column(type: 'datetime')]
+    #[Groups(['subworld:read'])]
     private ?\DateTimeInterface $createdAt = null;
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'ownedSubworlds')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['post:read','subworld:read'])]
     private ?User $owner = null;
 
     #[ORM\OneToMany(mappedBy: 'subworld', targetEntity: Post::class, cascade: ['persist', 'remove'])]
+    #[Groups(['subworld:read'])]
     private Collection $posts;
 
     #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'joinedSubworlds')]
     #[ORM\JoinTable(name: 'subworld_users')]
+    #[Groups(['subworld:read'])]
     private Collection $members;
 
     public function __construct()

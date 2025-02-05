@@ -3,79 +3,129 @@
 namespace App\Controller;
 
 use App\Entity\Vote;
-use App\Form\VoteType;
-use App\Repository\VoteRepository;
+use App\Entity\Post;
+use App\Entity\Comment;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[Route('/vote')]
-final class VoteController extends AbstractController
+#[Route('/api/votes')]
+class VoteController extends AbstractController
 {
-    #[Route(name: 'app_vote_index', methods: ['GET'])]
-    public function index(VoteRepository $voteRepository): Response
+    #[Route('/post/{id}', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function votePost(Post $post, Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
-        return $this->render('vote/index.html.twig', [
-            'votes' => $voteRepository->findAll(),
-        ]);
-    }
+        $user = $this->getUser();
+        $data = json_decode($request->getContent(), true);
+        $value = $data['value'] ?? null;
 
-    #[Route('/new', name: 'app_vote_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
-    {
-        $vote = new Vote();
-        $form = $this->createForm(VoteType::class, $vote);
-        $form->handleRequest($request);
+        if (!in_array($value, [-1, 1])) {
+            return $this->json(['error' => 'Invalid vote value. Use -1 (downvote) or 1 (upvote).'], 400);
+        }
 
-        if ($form->isSubmitted() && $form->isValid()) {
+        $existingVote = $entityManager->getRepository(Vote::class)->findOneBy(['user' => $user, 'post' => $post]);
+
+        if ($existingVote) {
+            $existingVote->setValue($value);
+        } else {
+            $vote = new Vote();
+            $vote->setUser($user);
+            $vote->setPost($post);
+            $vote->setValue($value);
+
             $entityManager->persist($vote);
-            $entityManager->flush();
-
-            return $this->redirectToRoute('app_vote_index', [], Response::HTTP_SEE_OTHER);
         }
 
-        return $this->render('vote/new.html.twig', [
-            'vote' => $vote,
-            'form' => $form,
-        ]);
+        $entityManager->flush();
+
+        return $this->json(['message' => 'Vote recorded successfully'], 201);
     }
 
-    #[Route('/{id}', name: 'app_vote_show', methods: ['GET'])]
-    public function show(Vote $vote): Response
+    #[Route('/comment/{id}', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function voteComment(Comment $comment, Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
-        return $this->render('vote/show.html.twig', [
-            'vote' => $vote,
-        ]);
-    }
+        $user = $this->getUser();
+        $data = json_decode($request->getContent(), true);
+        $value = $data['value'] ?? null;
 
-    #[Route('/{id}/edit', name: 'app_vote_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Vote $vote, EntityManagerInterface $entityManager): Response
-    {
-        $form = $this->createForm(VoteType::class, $vote);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->flush();
-
-            return $this->redirectToRoute('app_vote_index', [], Response::HTTP_SEE_OTHER);
+        if (!in_array($value, [-1, 1])) {
+            return $this->json(['error' => 'Invalid vote value. Use -1 (downvote) or 1 (upvote).'], 400);
         }
 
-        return $this->render('vote/edit.html.twig', [
-            'vote' => $vote,
-            'form' => $form,
-        ]);
-    }
+        $existingVote = $entityManager->getRepository(Vote::class)->findOneBy(['user' => $user, 'comment' => $comment]);
 
-    #[Route('/{id}', name: 'app_vote_delete', methods: ['POST'])]
-    public function delete(Request $request, Vote $vote, EntityManagerInterface $entityManager): Response
-    {
-        if ($this->isCsrfTokenValid('delete'.$vote->getId(), $request->getPayload()->getString('_token'))) {
-            $entityManager->remove($vote);
-            $entityManager->flush();
+        if ($existingVote) {
+            $existingVote->setValue($value);
+        } else {
+            $vote = new Vote();
+            $vote->setUser($user);
+            $vote->setComment($comment);
+            $vote->setValue($value);
+
+            $entityManager->persist($vote);
         }
 
-        return $this->redirectToRoute('app_vote_index', [], Response::HTTP_SEE_OTHER);
+        $entityManager->flush();
+
+        return $this->json(['message' => 'Vote recorded successfully'], 201);
     }
+
+    #[Route('/post/{postId}', methods: ['DELETE'])]
+    #[IsGranted('ROLE_USER')]
+    public function deleteVoteForPost(int $postId, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $user = $this->getUser();
+        $post = $entityManager->getRepository(Post::class)->find($postId);
+
+        if (!$post) {
+            return $this->json(['error' => 'Post not found'], 404);
+        }
+
+        $vote = $entityManager->getRepository(Vote::class)->findOneBy([
+            'user' => $user,
+            'post' => $post
+        ]);
+
+        if (!$vote) {
+            return $this->json(['error' => 'No vote found for this post'], 404);
+        }
+
+        $entityManager->remove($vote);
+        $entityManager->flush();
+
+        return $this->json(['message' => 'Vote removed successfully'], 200);
+    }
+
+    #[Route('/comment/{commentId}', methods: ['DELETE'])]
+    #[IsGranted('ROLE_USER')]
+    public function deleteVoteForComment(int $commentId, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $user = $this->getUser();
+        $comment = $entityManager->getRepository(Comment::class)->find($commentId);
+
+        if (!$comment) {
+            return $this->json(['error' => 'Comment not found'], 404);
+        }
+
+        $vote = $entityManager->getRepository(Vote::class)->findOneBy([
+            'user' => $user,
+            'comment' => $comment
+        ]);
+
+        if (!$vote) {
+            return $this->json(['error' => 'No vote found for this comment'], 404);
+        }
+
+        $entityManager->remove($vote);
+        $entityManager->flush();
+
+        return $this->json(['message' => 'Vote removed successfully'], 200);
+    }
+
+
 }

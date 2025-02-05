@@ -3,79 +3,91 @@
 namespace App\Controller;
 
 use App\Entity\Comment;
-use App\Form\CommentType;
-use App\Repository\CommentRepository;
+use App\Entity\Post;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\Serializer\SerializerInterface;
 
-#[Route('/comment')]
-final class CommentController extends AbstractController
+#[Route('/api/comments')]
+class CommentController extends AbstractController
 {
-    #[Route(name: 'app_comment_index', methods: ['GET'])]
-    public function index(CommentRepository $commentRepository): Response
+    #[Route('/', methods: ['GET'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function getAllComments(EntityManagerInterface $entityManager): JsonResponse
     {
-        return $this->render('comment/index.html.twig', [
-            'comments' => $commentRepository->findAll(),
-        ]);
+        $comments = $entityManager->getRepository(Comment::class)->findAll();
+        return $this->json($comments, 200, [], ['groups' => 'comment:read']);
     }
 
-    #[Route('/new', name: 'app_comment_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
+    #[Route('/{id}', methods: ['GET'])]
+    public function getComment(Comment $comment, SerializerInterface $serializer): JsonResponse
     {
+        $jsonComment = $serializer->serialize($comment, 'json', ['groups' => 'comment:read']);
+        return new JsonResponse($jsonComment, 200, [], true);
+    }
+
+
+    #[Route('/create', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function createComment(Request $request, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        $user = $this->getUser();
+        $post = $entityManager->getRepository(Post::class)->find($data['post_id']);
+
+        if (!$post) {
+            return $this->json(['error' => 'Post not found'], 404);
+        }
+
         $comment = new Comment();
-        $form = $this->createForm(CommentType::class, $comment);
-        $form->handleRequest($request);
+        $comment->setContent($data['content']);
+        $comment->setUser($user);
+        $comment->setPost($post);
+        $entityManager->persist($comment);
+        $entityManager->flush();
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->persist($comment);
-            $entityManager->flush();
+        return $this->json($comment, 201, [], ['groups' => 'comment:read']);
+    }
 
-            return $this->redirectToRoute('app_comment_index', [], Response::HTTP_SEE_OTHER);
+
+    #[Route('/{id}', methods: ['PUT', 'PATCH'])]
+    #[IsGranted('ROLE_USER')]
+    public function updateComment(Comment $comment, Request $request, EntityManagerInterface $entityManager, ValidatorInterface $validator): JsonResponse
+    {
+        $this->denyAccessUnlessGranted('edit', $comment);
+
+        $data = json_decode($request->getContent(), true);
+        if (isset($data['content'])) {
+            $comment->setContent($data['content']);
         }
 
-        return $this->render('comment/new.html.twig', [
-            'comment' => $comment,
-            'form' => $form,
-        ]);
-    }
-
-    #[Route('/{id}', name: 'app_comment_show', methods: ['GET'])]
-    public function show(Comment $comment): Response
-    {
-        return $this->render('comment/show.html.twig', [
-            'comment' => $comment,
-        ]);
-    }
-
-    #[Route('/{id}/edit', name: 'app_comment_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Comment $comment, EntityManagerInterface $entityManager): Response
-    {
-        $form = $this->createForm(CommentType::class, $comment);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->flush();
-
-            return $this->redirectToRoute('app_comment_index', [], Response::HTTP_SEE_OTHER);
+        $errors = $validator->validate($comment);
+        if (count($errors) > 0) {
+            return $this->json(['error' => (string) $errors], 400);
         }
 
-        return $this->render('comment/edit.html.twig', [
-            'comment' => $comment,
-            'form' => $form,
-        ]);
+        $entityManager->flush();
+
+        return $this->json($comment, 200, [], ['groups' => 'comment:read']);
     }
 
-    #[Route('/{id}', name: 'app_comment_delete', methods: ['POST'])]
-    public function delete(Request $request, Comment $comment, EntityManagerInterface $entityManager): Response
+    #[Route('/{id}', methods: ['DELETE'])]
+    #[IsGranted('ROLE_USER')]
+    public function deleteComment(Comment $comment, EntityManagerInterface $entityManager): JsonResponse
     {
-        if ($this->isCsrfTokenValid('delete'.$comment->getId(), $request->getPayload()->getString('_token'))) {
+        $this->denyAccessUnlessGranted('delete', $comment);
+
+        try {
             $entityManager->remove($comment);
             $entityManager->flush();
+            return $this->json(['message' => 'Comment deleted successfully'], 200);
+        } catch (\Exception $e) {
+            return $this->json(['error' => 'Failed to delete comment'], 500);
         }
-
-        return $this->redirectToRoute('app_comment_index', [], Response::HTTP_SEE_OTHER);
     }
 }
