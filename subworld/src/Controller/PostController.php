@@ -47,6 +47,8 @@ final class PostController extends AbstractController
     {
         return $this->render('post/show.html.twig', [
             'post' => $post,
+            'comments' => $post->getComments(), // Fetch comments associated with the post
+            'votes' => count($post->getVotes()), // Fetch total votes on the post
         ]);
     }
 
@@ -71,7 +73,7 @@ final class PostController extends AbstractController
     #[Route('/{id}', name: 'app_post_delete', methods: ['POST'])]
     public function delete(Request $request, Post $post, EntityManagerInterface $entityManager): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$post->getId(), $request->getPayload()->getString('_token'))) {
+        if ($this->isCsrfTokenValid('delete' . $post->getId(), $request->getPayload()->getString('_token'))) {
             $entityManager->remove($post);
             $entityManager->flush();
         }

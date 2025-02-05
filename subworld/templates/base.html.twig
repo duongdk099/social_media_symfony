@@ -1,16 +1,75 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="UTF-8">
-        <title>{% block title %}Welcome!{% endblock %}</title>
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>">
-        {% block stylesheets %}
-        {% endblock %}
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>
+			{% block title %}My Social Media
+			{% endblock %}
+		</title>
 
-        {% block javascripts %}
-        {% endblock %}
-    </head>
-    <body>
-        {% block body %}{% endblock %}
-    </body>
-</html>
+		{# Tailwind CSS CDN #}
+		<script src="https://cdn.tailwindcss.com"></script>
+
+		<style>
+			/* Ensure no margins or extra padding */
+			body {
+				margin: 0;
+				padding: 0;
+				background-color: #4E4944; /* Main Background */
+				color: #e0e0e0;
+			}
+		</style>
+
+		{% block stylesheets %}{% endblock %}
+	</head>
+	<body
+		class="flex flex-col h-screen">
+
+		{# Navigation Bar (Full Width) #}
+		<nav class="w-full bg-[#201E1A] fixed top-0 left-0 z-50 px-6 py-3 flex justify-between items-center">
+			<a class="text-white text-lg font-bold" href="#">Subworlds</a>
+
+			{# Search Bar #}
+			<form class="flex gap-2">
+				<input class="w-[30rem] px-4 py-2 rounded-full border-none bg-gray-700 text-white" type="search" placeholder="Search..." aria-label="Search">
+			</form>
+
+			{# Authentication Buttons #}
+			<div class="flex gap-2">
+				{% if is_granted('IS_AUTHENTICATED_FULLY') %}
+					{# Show Profile and Logout for Logged-in Users #}
+					<a href="{{ path('app_user_show', { 'id': app.user.id }) }}" class="bg-blue-500 text-white px-4 py-2 rounded-full">
+						{{ app.user.username }}
+					</a>
+					<a href="{{ path('app_logout') }}" class="bg-red-600 text-white px-4 py-2 rounded-full">Logout</a>
+				{% else %}
+					{# Show Login and Register for Guests #}
+					<a href="{{ path('app_login') }}" class="bg-green-600 text-white px-4 py-2 rounded-full">Login</a>
+					<a href="{{ path('app_register') }}" class="bg-blue-500 text-white px-4 py-2 rounded-full">Sign Up</a>
+				{% endif %}
+			</div>
+		</nav>
+
+		{# Layout: Left Sidebar - Main Content - Right Empty Space #}
+		<div
+			class="flex w-full pt-16 h-screen">
+			{# Left Sidebar (Fixed, Full Height) #}
+			<aside class="w-1/6 h-full bg-[#1C1C1C] p-4 fixed">
+				{% include 'components/sidebar.html.twig' %}
+			</aside>
+
+			{# Left Empty Space for Balance #}
+			<div class="w-1/6 h-full bg-[#4E4944]"></div>
+
+			{# Main Content (Centered) #}
+			<main class="w-2/3 p-6"> {% block body %}{% endblock %}
+				</main>
+
+				{# Right Empty Space for Balance #}
+				<div class="w-1/6 h-full bg-[#4E4944]"></div>
+			</div>
+
+			{% block javascripts %}{% endblock %}
+		</body>
+	</html>

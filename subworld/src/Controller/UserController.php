@@ -43,10 +43,17 @@ final class UserController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_user_show', methods: ['GET'])]
-    public function show(User $user): Response
+    public function show(int $id, EntityManagerInterface $entityManager): Response
     {
+        $user = $entityManager->getRepository(User::class)->find($id);
+
+        if (!$user) {
+            throw $this->createNotFoundException('User not found');
+        }
+
         return $this->render('user/show.html.twig', [
             'user' => $user,
+            'posts' => $user->getPosts(), // Fetch posts by the user
         ]);
     }
 
