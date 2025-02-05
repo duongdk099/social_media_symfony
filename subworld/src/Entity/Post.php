@@ -37,6 +37,7 @@ class Post
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'posts')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['post:read','subworld:read'])]
+    #[ORM\Column(type: 'uuid')]
     private ?User $user = null;
 
     #[ORM\ManyToOne(targetEntity: Subworld::class, inversedBy: 'posts')]

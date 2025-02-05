@@ -26,11 +26,13 @@ class Message
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'sentMessages')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['message:read'])]
+    #[ORM\Column(type: 'uuid')]
     private ?User $sender = null;
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'receivedMessages')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['message:read'])]
+    #[ORM\Column(type: 'uuid')]
     private ?User $receiver = null;
 
     public function __construct()

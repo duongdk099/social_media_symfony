@@ -30,6 +30,7 @@ class Notification
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'notifications')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['notification:read'])]
+    #[ORM\Column(type: 'uuid')]
     private ?User $user = null;
 
     public function __construct()

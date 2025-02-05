@@ -22,6 +22,7 @@ class Vote
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'votes')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['post:read', 'comment:read'])]
+    #[ORM\Column(type: 'uuid')]
     private ?User $user = null;
 
     #[ORM\ManyToOne(targetEntity: Post::class, inversedBy: 'votes')]

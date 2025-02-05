@@ -26,6 +26,7 @@ class Report
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'reports')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['report:read'])]
+    #[ORM\Column(type: 'uuid')]
     private ?User $user = null;
 
     #[ORM\ManyToOne(targetEntity: Post::class, inversedBy: 'reports')]

@@ -93,9 +93,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: "string", length: 255, nullable: true)]
     private ?string $resetToken = null;
 
-    #[ORM\Column(type: "boolean")]
-    private bool $isVerified = false;
-
     public function __construct()
     {
         $this->id = Uuid::uuid4(); 
@@ -194,18 +191,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->verificationToken = $token;
         return $this;
     }
-
-    public function isVerified(): bool
-    {
-        return $this->isVerified;
-    }
-
-    public function setVerified(bool $isVerified): self
-    {
-        $this->isVerified = $isVerified;
-        return $this;
-    }
-
 
     public function getVerificationTokenExpiresAt(): ?\DateTimeInterface
     {

@@ -29,6 +29,7 @@ class Comment
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'comments')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['comment:read'])]
+    #[ORM\Column(type: 'uuid')]
     private ?User $user = null;
     
     #[ORM\ManyToOne(targetEntity: Post::class, inversedBy: 'comments')]

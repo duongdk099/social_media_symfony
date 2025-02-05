@@ -32,6 +32,7 @@ class Subworld
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'ownedSubworlds')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['post:read','subworld:read'])]
+    #[ORM\Column(type: 'uuid')]
     private ?User $owner = null;
 
     #[ORM\OneToMany(mappedBy: 'subworld', targetEntity: Post::class, cascade: ['persist', 'remove'])]
