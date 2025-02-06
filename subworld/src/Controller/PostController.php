@@ -21,7 +21,7 @@ class PostController extends AbstractController
     public function getAllPosts(Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
         $user = $this->getUser();
-        $userId = $user ? $user->getId() : null;
+        $userId = $user?->getId();
 
         $page = max(1, (int) $request->query->get('page', 1));
         $limit = 5;
@@ -49,6 +49,7 @@ class PostController extends AbstractController
 
         // Fetch user votes separately if a user is logged in
         $userVotes = [];
+
         if ($userId) {
             $voteQuery = $entityManager->createQuery(
                 'SELECT v.post AS postId, v.value AS voteValue

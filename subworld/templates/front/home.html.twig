@@ -19,6 +19,7 @@
         let currentPage = 1;
         let isLoading = false;
 
+
         document.addEventListener("DOMContentLoaded", function () {
             loadMorePosts();
 
@@ -120,6 +121,7 @@
         }
 
         function attachVoteListeners() {
+            const token = localStorage.getItem("jwt_token");
             document.querySelectorAll(".vote-button").forEach(button => {
                 button.addEventListener("click", async function () {
                     const postId = this.getAttribute("data-post-id");
@@ -127,7 +129,10 @@
 
                     const response = await fetch(`/api/votes/post/${postId}`, {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": "Bearer " + token
+                        },
                         body: JSON.stringify({ value: voteValue })
                     });
 

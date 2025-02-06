@@ -36,30 +36,31 @@
             const postsContainer = document.getElementById('posts');
             const loading = document.getElementById('loading');
             const errorMessage = document.getElementById('errorMessage');
-
+        
             try {
                 const response = await fetch('/api/posts/user/{{ user.id }}', {
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
-
+        
                 const data = await response.json();
-
+        
+                console.log('Fetched data:', data); // Log the fetched data
+        
                 if (response.ok) {
                     let html = '';
-
-                    if (data.length === 0) {
+                    if (!Array.isArray(data.posts) || data.posts.length === 0) {
                         html = `<p class="text-gray-500">No posts found.</p>`;
                     } else {
-                        data.forEach(post => {
+                        data.posts.forEach(post => {
                             html += `
                                 <div class="bg-white shadow-md rounded-lg p-4 flex">
                                     <!-- Voting System -->
                                     <div class="flex flex-col items-center pr-4">
-                                        <button class="hover:scale-110 transition-transform">
+                                        <button class="vote-button hover:scale-110 transition-transform" data-post-id="${post.id}" data-vote-value="1">
                                             <img src="{{ asset('assets/svg/shift.svg') }}" alt="Upvote" class="w-6 h-6">
                                         </button>
-                                        <span class="text-gray-700 font-semibold">${post.vote_count}</span>
-                                        <button class="hover:scale-110 transition-transform">
+                                        <span id="vote-count-${post.id}" class="text-gray-700 font-semibold">${post.vote_count}</span>
+                                        <button class="vote-button hover:scale-110 transition-transform" data-post-id="${post.id}" data-vote-value="-1">
                                             <img src="{{ asset('assets/svg/shift.svg') }}" alt="Downvote" class="w-6 h-6 rotate-180">
                                         </button>
                                     </div>
@@ -93,20 +94,100 @@
                             `;
                         });
                     }
-
+        
                     postsContainer.innerHTML = html;
                 } else {
                     errorMessage.textContent = "Failed to fetch posts. Try again later.";
                     errorMessage.classList.remove("hidden");
                 }
             } catch (error) {
+                console.error('Error fetching posts:', error); // Log the error
                 errorMessage.textContent = "Error loading posts.";
                 errorMessage.classList.remove("hidden");
             } finally {
                 loading.classList.add("hidden");
             }
         }
-
+        
         fetchUserPosts();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.vote-button').forEach(button => {
+                    button.addEventListener('click', handleVote);
+                });
+        });
+
+        async function handleVote(event) {
+            const button = event.currentTarget;
+            const postId = button.dataset.postId;
+            const voteValue = button.dataset.voteValue;
+            const token = localStorage.getItem('jwt_token');
+
+            try {
+                const response = await fetch(`/api/votes/post/${postId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ value: parseInt(voteValue) })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Update the vote count in the UI
+                    const voteCountElement = document.querySelector(`#vote-count-${postId}`);
+                    voteCountElement.textContent = data.new_vote_count;
+
+                    // Optionally, update the button states (e.g., highlight the selected vote)
+                    updateVoteButtonStates(postId, data.user_vote);
+                } else {
+                    console.error('Failed to record vote:', data.error);
+                }
+            } catch (error) {
+                console.error('Error recording vote:', error);
+            }
+        }
+
+        function updateVoteButtonStates(postId, userVote) {
+            const upvoteButton = document.querySelector(`.vote-button[data-post-id="${postId}"][data-vote-value="1"]`);
+            const downvoteButton = document.querySelector(`.vote-button[data-post-id="${postId}"][data-vote-value="-1"]`);
+
+            if (userVote === 1) {
+                upvoteButton.classList.add('selected');
+                downvoteButton.classList.remove('selected');
+            } else if (userVote === -1) {
+                upvoteButton.classList.remove('selected');
+                downvoteButton.classList.add('selected');
+            } else {
+                upvoteButton.classList.remove('selected');
+                downvoteButton.classList.remove('selected');
+            }
+        }
+
+        function attachVoteListeners() {
+            const token = localStorage.getItem("jwt_token");
+            document.querySelectorAll(".vote-button").forEach(button => {
+                button.addEventListener("click", async function () {
+                    const postId = this.getAttribute("data-post-id");
+                    const voteValue = parseInt(this.getAttribute("data-vote"));
+
+                    const response = await fetch(`/api/votes/post/${postId}`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": "Bearer " + token
+                        },
+                        body: JSON.stringify({ value: voteValue })
+                    });
+
+                    const data = await response.json();
+                    if (response.ok) {
+                        document.getElementById(`vote-count-${postId}`).textContent = data.new_vote_count;
+                    }
+                });
+            });
+        }
     </script>
 {% endblock %}
