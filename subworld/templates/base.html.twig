@@ -1,61 +1,117 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Subworld{% endblock %}</title>
-    
-    {# Bootstrap ou Tailwind (au choix) #}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    
-    {# Fichier CSS personnalisé #}
-    <link rel="stylesheet" href="{{ asset('css/style.css') }}">
-
-    {% block stylesheets %}{% endblock %}
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>{% block title %}My App{% endblock %}</title>
+	<script src="https://cdn.tailwindcss.com"></script>
+	<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body>
+<body class="bg-gray-100">
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="{{ path('home') }}">Subworld</a>
-            <div class="collapse navbar-collapse">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ path('home') }}">Accueil</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Explorer</a>
-                    </li>
-                    {% if app.user %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">Mon Profil</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-danger" href="#" onclick="logout()">Déconnexion</a>
-                        </li>
-                    {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="/login">Connexion</a>
-                        </li>
-                    {% endif %}
-                </ul>
-            </div>
-        </div>
-    </nav>
+	<!-- Navbar -->
+	<nav class="bg-white shadow-md fixed top-0 left-0 w-full z-10">
+		<div class="container mx-auto px-4 py-3 flex justify-between items-center">
+			<a href="/" class="text-xl font-semibold text-gray-900">Subworld</a>
+			<div class="flex space-x-4 items-center">
+				<!-- Search -->
+				<form action="/search" method="GET" class="flex items-center">
+					<input type="text" name="q" placeholder="Search..." class="px-3 py-1 border rounded-md focus:outline-none focus:ring">
+					<button type="submit" class="ml-2 px-4 py-1 bg-blue-600 text-white rounded-md">Search</button>
+				</form>
 
-    <main class="container mt-4">
-        {% block body %}{% endblock %}
-    </main>
+                <!-- Authentication Controls -->
+                <div id="authControls" x-data="{ open: false }">
+                    <!-- Show Login Button if User is Not Logged In -->
+                    <a href="{{ path('app_login_form') }}" id="loginButton" class="px-4 py-1 bg-blue-600 text-white rounded-md">Login</a>
 
-    {# Scripts nécessaires #}
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+                    <!-- Dropdown for Logged-in Users -->
+                    <div class="relative hidden" id="userDropdown">
+                        <button @click="open = !open" class="px-4 py-1 bg-green-600 text-white rounded-md flex items-center">
+                            My Account
+                            <svg class="w-4 h-4 ml-2 transition-transform duration-300" :class="{ 'rotate-180': open }" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                            </svg>
+                        </button>
+
+                        <!-- Dropdown Menu -->
+                        <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg py-2">
+                            <a id="profileLink" href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-200">My Profile</a>
+                            <button id="logoutButton" class="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-200">Logout</button>
+                        </div>
+                    </div>
+                </div>
+
+			</div>
+		</div>
+	</nav>
+
+	<!-- Main Layout -->
+	<div class="flex pt-16">
+		<!-- Sidebar -->
+		<aside x-data="{ expanded: true }" class="fixed top-16 left-0 w-64 bg-white shadow-md h-screen p-4 transition-all overflow-y-auto">
+			<!-- Popular Subworlds Section -->
+			<button @click="expanded = !expanded" class="w-full flex items-center justify-between text-gray-700 font-semibold pb-2">
+				Popular Subworlds
+				<img :src="expanded ? '{{ asset('assets/svg/down.svg') }}' : '{{ asset('assets/svg/right.svg') }}'" alt="Toggle Icon" class="w-5 h-5 transition-transform duration-300 transform" :class="expanded ? 'rotate-180' : 'rotate-0'">
+			</button>
+
+			<div x-show="expanded" x-transition class="mt-2 space-y-2">
+				{% for subworld in popular_subworlds %}
+					<a href="{{ path('app_subworld_show', { 'id': subworld.id }) }}" class="block px-3 py-2 text-gray-800 rounded-md hover:bg-gray-200">
+						{{ subworld.name }} ({{ subworld.member_count }} members)
+					</a>
+				{% endfor %}
+			</div>
+
+			<!-- Resources Section -->
+			<div class="mt-4 pt-4 border-t border-gray-300">
+				<p class="text-gray-700 font-semibold pb-2">Resources</p>
+				<a href="/about" class="block px-3 py-2 text-gray-800 rounded-md hover:bg-gray-200">About</a>
+				<a href="/help" class="block px-3 py-2 text-gray-800 rounded-md hover:bg-gray-200">Help</a>
+				<a href="/policy" class="block px-3 py-2 text-gray-800 rounded-md hover:bg-gray-200">Privacy Policy</a>
+				<a href="/user-agreement" class="block px-3 py-2 text-gray-800 rounded-md hover:bg-gray-200">User Agreement</a>
+			</div>
+		</aside>
+
+		<!-- Main Content -->
+		<main class="ml-64 w-full px-4 mt-5"> 
+			{% block content %}{% endblock %}
+		</main>
+	</div>
+
+	<!-- JavaScript to Handle Authentication -->
     <script>
-        function logout() {
-            localStorage.removeItem('token');
-            window.location.href = "/login";
-        }
+        document.addEventListener("DOMContentLoaded", function () {
+            const token = localStorage.getItem("jwt_token");
+            const userId = localStorage.getItem("user_id");
+            const loginButton = document.getElementById("loginButton");
+            const userDropdown = document.getElementById("userDropdown");
+            const profileLink = document.getElementById("profileLink");
+            const logoutButton = document.getElementById("logoutButton");
+
+            if (token && userId) {
+                // User is logged in
+                loginButton.classList.add("hidden");
+                userDropdown.classList.remove("hidden");
+
+                // Set profile link dynamically
+                profileLink.href = "/api/users/user/" + userId;
+            } else {
+                // User is logged out
+                loginButton.classList.remove("hidden");
+                userDropdown.classList.add("hidden");
+            }
+
+            // Logout functionality
+            logoutButton.addEventListener("click", function () {
+                localStorage.removeItem("jwt_token");
+                localStorage.removeItem("user_id");
+                sessionStorage.removeItem("redirect_after_login");
+                window.location.href = "/";
+            });
+        });
     </script>
 
-    {% block javascripts %}{% endblock %}
 </body>
 </html>

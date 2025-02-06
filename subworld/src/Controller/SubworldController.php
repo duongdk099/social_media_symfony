@@ -10,6 +10,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\HttpFoundation\Response;
 
 #[Route('/api/subworlds')]
 class SubworldController extends AbstractController
@@ -86,5 +87,41 @@ class SubworldController extends AbstractController
         }
 
         return $this->json(['error' => 'Unauthorized action'], 403);
+    }
+
+
+    #[Route('/subworld/{id}', name: 'app_subworld_show')]
+    public function show(EntityManagerInterface $em, int $id): Response
+    {
+        // Fetch the subworld
+        $subworld = $em->getRepository(Subworld::class)->find($id);
+        if (!$subworld) {
+            throw $this->createNotFoundException('Subworld not found');
+        }
+
+        // Fetch the number of members
+        $memberCount = count($subworld->getMembers());
+
+        // Fetch posts in this subworld
+        $query = $em->createQuery(
+            'SELECT p.id AS post_id, p.title, p.content, p.createdAt, 
+                    u.username AS author, u.id AS user_id, 
+                    COUNT(c.id) AS comment_count, 
+                    COALESCE(SUM(v.value), 0) AS vote_count
+             FROM App\Entity\Post p
+             JOIN p.user u
+             LEFT JOIN p.comments c
+             LEFT JOIN p.votes v
+             WHERE p.subworld = :subworld
+             GROUP BY p.id, u.id
+             ORDER BY p.createdAt DESC'
+        )->setParameter('subworld', $subworld)
+         ->getResult();
+
+        return $this->render('subworld/show.html.twig', [
+            'subworld' => $subworld,
+            'member_count' => $memberCount,
+            'posts' => $query
+        ]);
     }
 }

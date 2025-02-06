@@ -33,6 +33,12 @@ services:
             $baseUrl: '%meteomatics_base_url%'
             $username: '%meteomatics_username%'
             $password: '%meteomatics_password%'
+
+    App\EventSubscriber\TwigGlobalSubscriber:
+        arguments:
+            $entityManager: '@doctrine.orm.entity_manager'
+            $twig: '@twig'
+        tags: [ 'kernel.event_subscriber' ]
     
     http_client:
         class: Symfony\Contracts\HttpClient\HttpClientInterface

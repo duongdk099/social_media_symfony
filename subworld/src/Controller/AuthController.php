@@ -14,7 +14,8 @@ use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use App\Service\EmailService;
-
+use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
+use Symfony\Component\HttpFoundation\Response;
 
 #[Route('/api/auth')]
 class AuthController extends AbstractController
@@ -69,6 +70,12 @@ class AuthController extends AbstractController
         return $this->json(['message' => 'User registered successfully. Please check your email to verify your account.'], 201);
     }
 
+    #[Route('/register', name: 'app_register_form', methods: ['GET'])]
+    public function registerForm(): Response
+    {
+        return $this->render('auth/register.html.twig');
+    }
+
 
 
     #[Route('/login', name: 'app_login', methods: ['POST'])]
@@ -76,7 +83,7 @@ class AuthController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
 
-        
+
         if (!isset($data['email']) || !isset($data['password'])) {
             return $this->json(['error' => 'Missing email or password'], 400);
         }
@@ -86,7 +93,7 @@ class AuthController extends AbstractController
         if (!$user->isVerified()) {
             return $this->json(['error' => 'Please verify your email before logging in'], 403);
         }
-        
+
         if (!$user || !$passwordHasher->isPasswordValid($user, $data['password'])) {
             return $this->json(['error' => 'Invalid credentials'], 401);
         }
@@ -98,7 +105,15 @@ class AuthController extends AbstractController
             'sub' => $user->getUserIdentifier(),
         ]);
 
-        return $this->json(['token' => $token]);
+        return $this->json(['token' => $token, 'user_id' => $user->getId()]);
+    }
+
+    #[Route('/login', name: 'app_login_form', methods: ['GET'])]
+    public function loginForm(AuthenticationUtils $authenticationUtils): Response
+    {
+        return $this->render('auth/login.html.twig', [
+            'error' => $authenticationUtils->getLastAuthenticationError(),
+        ]);
     }
 
     #[Route('/logout', name: 'app_logout', methods: ['POST'])]

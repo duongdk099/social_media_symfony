@@ -15,11 +15,19 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[Route('/api/votes')]
 class VoteController extends AbstractController
 {
-    #[Route('/post/{id}', methods: ['POST'])]
+    #[Route('/post/{id}', methods: ['POST', 'GET'])]  // Allow GET request for fetching vote status
     #[IsGranted('ROLE_USER')]
     public function votePost(Post $post, Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
         $user = $this->getUser();
+
+        // If it's a GET request, return the user's vote status
+        if ($request->isMethod('GET')) {
+            $existingVote = $entityManager->getRepository(Vote::class)->findOneBy(['user' => $user, 'post' => $post]);
+            return $this->json(['vote_value' => $existingVote ? $existingVote->getValue() : 0]);
+        }
+
+        // Handle POST request for voting
         $data = json_decode($request->getContent(), true);
         $value = $data['value'] ?? null;
 
@@ -30,20 +38,31 @@ class VoteController extends AbstractController
         $existingVote = $entityManager->getRepository(Vote::class)->findOneBy(['user' => $user, 'post' => $post]);
 
         if ($existingVote) {
-            $existingVote->setValue($value);
+            if ($existingVote->getValue() === $value) {
+                $entityManager->remove($existingVote);  // Remove vote if clicked again
+            } else {
+                $existingVote->setValue($value);  // Update vote value if changed
+            }
         } else {
             $vote = new Vote();
             $vote->setUser($user);
             $vote->setPost($post);
             $vote->setValue($value);
-
             $entityManager->persist($vote);
         }
 
         $entityManager->flush();
 
-        return $this->json(['message' => 'Vote recorded successfully'], 201);
+        // Recalculate vote count
+        $newVoteCount = $entityManager->getRepository(Vote::class)->count(['post' => $post]);
+
+        return $this->json([
+            'message' => 'Vote recorded successfully',
+            'new_vote_count' => $newVoteCount,
+            'user_vote' => $existingVote ? $existingVote->getValue() : $value
+        ], 201);
     }
+
 
     #[Route('/comment/{id}', methods: ['POST'])]
     #[IsGranted('ROLE_USER')]
@@ -60,19 +79,28 @@ class VoteController extends AbstractController
         $existingVote = $entityManager->getRepository(Vote::class)->findOneBy(['user' => $user, 'comment' => $comment]);
 
         if ($existingVote) {
-            $existingVote->setValue($value);
+            if ($existingVote->getValue() === $value) {
+                $entityManager->remove($existingVote);
+            } else {
+                $existingVote->setValue($value);
+            }
         } else {
             $vote = new Vote();
             $vote->setUser($user);
             $vote->setComment($comment);
             $vote->setValue($value);
-
             $entityManager->persist($vote);
         }
 
         $entityManager->flush();
 
-        return $this->json(['message' => 'Vote recorded successfully'], 201);
+        // Calculate new vote count
+        $newVoteCount = $entityManager->getRepository(Vote::class)->count(['comment' => $comment]);
+
+        return $this->json([
+            'message' => 'Vote recorded successfully',
+            'new_vote_count' => $newVoteCount
+        ], 201);
     }
 
     #[Route('/post/{postId}', methods: ['DELETE'])]
@@ -126,6 +154,4 @@ class VoteController extends AbstractController
 
         return $this->json(['message' => 'Vote removed successfully'], 200);
     }
-
-
 }

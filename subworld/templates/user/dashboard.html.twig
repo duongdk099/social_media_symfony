@@ -1,0 +1,64 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+    <div class="max-w-4xl mx-auto mt-10 bg-white shadow-md rounded-lg p-6">
+        <h2 class="text-2xl font-bold text-gray-800">Welcome, {{ app.user.username }} 🎉</h2>
+        <p class="text-gray-600">Your Dashboard</p>
+
+        <!-- My Posts Section -->
+        <h3 class="text-xl font-semibold mt-6">My Latest Posts</h3>
+
+        <div id="loading" class="text-center text-gray-500 mt-3">Loading posts...</div>
+        <div id="posts" class="mt-4 space-y-4"></div>
+        <p id="errorMessage" class="text-red-500 hidden mt-3"></p>
+    </div>
+
+    <script>
+        async function fetchUserPosts() {
+            const token = localStorage.getItem('jwt_token');
+            const postsContainer = document.getElementById('posts');
+            const loading = document.getElementById('loading');
+            const errorMessage = document.getElementById('errorMessage');
+
+            try {
+                const response = await fetch('/api/posts/user', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    let html = '';
+
+                    if (data.length === 0) {
+                        html = `<p class="text-gray-500">No posts found.</p>`;
+                    } else {
+                        data.forEach(post => {
+                            html += `
+                                <div class="border border-gray-300 p-4 rounded-lg shadow-md">
+                                    <h5 class="text-lg font-semibold text-gray-900">${post.title}</h5>
+                                    <p class="text-gray-700 mt-2">${post.content.slice(0, 200)}...</p>
+                                    <a href="/post/${post.id}" class="text-blue-600 hover:underline text-sm mt-2 inline-block">Read more</a>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    postsContainer.innerHTML = html;
+                } else {
+                    errorMessage.textContent = "Failed to fetch posts. Try again later.";
+                    errorMessage.classList.remove("hidden");
+                }
+            } catch (error) {
+                errorMessage.textContent = "Error loading posts.";
+                errorMessage.classList.remove("hidden");
+            } finally {
+                loading.classList.add("hidden");
+            }
+        }
+
+        fetchUserPosts();
+    </script>
+{% endblock %}

@@ -30,4 +30,7 @@ security:
         - { path: ^/api/auth/login, roles: PUBLIC_ACCESS }
         - { path: ^/api/password, roles: PUBLIC_ACCESS }
         - { path: ^/api/weather, roles: PUBLIC_ACCESS }
+        - { path: ^/api/posts, roles: PUBLIC_ACCESS }  # Allow public access to posts
+        - { path: ^/api/subworlds, roles: PUBLIC_ACCESS } # Allow public access to subworlds
+        - { path: ^/api/users, roles: PUBLIC_ACCESS } # Keep users protected
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }

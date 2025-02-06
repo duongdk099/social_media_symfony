@@ -20,7 +20,7 @@ class CommentController extends AbstractController
     #[IsGranted('ROLE_ADMIN')]
     public function getAllComments(EntityManagerInterface $entityManager): JsonResponse
     {
-        $comments = $entityManager->getRepository(Comment::class)->findAll();
+        $comments = $entityManager->getRepository(Comment::class)->findBy([], ['createdAt' => 'DESC']); // Sorted by date DESC
         return $this->json($comments, 200, [], ['groups' => 'comment:read']);
     }
 

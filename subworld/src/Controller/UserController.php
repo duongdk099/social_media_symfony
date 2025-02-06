@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace App\Controller;
 
@@ -10,6 +10,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\HttpFoundation\Response;
 
 #[Route('/api/users')]
 class UserController extends AbstractController
@@ -73,5 +74,49 @@ class UserController extends AbstractController
         $entityManager->flush();
 
         return $this->json(['message' => 'User deleted successfully'], 200);
+    }
+
+    #[Route('/user/{id}', name: 'app_user_show')]
+    public function show(EntityManagerInterface $em, string $id): Response
+    {
+        // Fetch the user
+        $user = $em->getRepository(User::class)->find($id);
+        if (!$user) {
+            throw $this->createNotFoundException('User not found');
+        }
+
+        // Fetch user posts
+        $query = $em->createQuery(
+            'SELECT p.id AS post_id, p.title, p.content, p.createdAt, 
+                    s.name AS subworld, s.id AS subworld_id,
+                    COUNT(c.id) AS comment_count, 
+                    COALESCE(SUM(v.value), 0) AS vote_count
+             FROM App\Entity\Post p
+             JOIN p.subworld s
+             LEFT JOIN p.comments c
+             LEFT JOIN p.votes v
+             WHERE p.user = :user
+             GROUP BY p.id, s.id
+             ORDER BY p.createdAt DESC'
+        )->setParameter('user', $user)
+            ->getResult();
+
+        return $this->render('user/show.html.twig', [
+            'user' => $user,
+            'posts' => $query
+        ]);
+    }
+
+    #[Route('/dashboard', name: 'user_dashboard', methods: ['GET'])]
+    #[IsGranted('ROLE_USER')]
+    public function dashboard(): Response
+    {
+        $user = $this->getUser();
+
+        if (!$user) {
+            throw $this->createAccessDeniedException('You must be logged in to view this page.');
+        }
+
+        return $this->redirectToRoute('app_user_show', ['id' => $user->getId()]);
     }
 }
